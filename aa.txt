@@ -1,0 +1,12 @@
+curl --location 'https://api.openai.com/v1/chat/completions'\
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer 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' \
+--data '{
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": "Summarize in one sentence the following text: You should express what you want a model to do by providing instructions that are as clear and  specific as you can possibly make them. This will guide the model towards the desired output, and reduce the chances of receiving irrelevant or incorrect responses. Don't confuse writing a clear prompt with writing a short prompt. In many cases, longer prompts provide more clarity and context for the model, which can lead to more detailed and relevant outputs."}],
+    "temperature": 0
+  }'
+curl https://api.openai.com/v1/models \
+  -H "Authorization: Bearer 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"
+
+
