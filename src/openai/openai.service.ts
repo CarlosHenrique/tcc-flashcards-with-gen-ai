@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
 import {
-  OpenAIApi,
-  Configuration,
   ChatCompletionResponseMessage,
+  Configuration,
+  OpenAIApi,
 } from 'openai';
-import { BoardQuestionInput, OpenAiOptions } from './entities/openai.entity';
+import { OpenAiOptions } from './entities/openai.entity';
 
 import { CreateDeckInput } from 'src/deck/entities/deck.entity';
 import { CreateQuizInput } from 'src/quiz/entities/Quiz.entity';
@@ -68,21 +68,38 @@ Utilize as informações fornecidas para gerar um conjunto de flashcards no form
 
       return prompt;
     } else if ('deckAssociatedId' in text) {
+      const serializedCards = JSON.stringify(text.cards);
       const prompt = `
-      Olá, ChatGPT! Eu tenho um array de flashcards para um quiz, e cada flashcard contém os seguintes campos: question, answer, practiceExample e category. Gostaria que você criasse um quiz com base nesses flashcards. Para cada flashcard, por favor, gere diferentes tipos de perguntas de quiz, como múltipla escolha, verdadeiro ou falso, e outras que você considerar apropriadas. Assegure-se de que cada pergunta do quiz inclua opções de resposta e indique qual é a resposta correta. Utilize também o practiceExample e a category para adicionar contexto ou detalhes às perguntas, se aplicável. Aqui está o array de flashcards:
+Olá, ChatGPT! Eu estou criando um quiz interativo e preciso da sua ajuda para gerar perguntas dinâmicas e envolventes com base em um array específico de flashcards. Cada flashcard contém os seguintes campos: question (a pergunta original), answer (a resposta correta), practiceExample (um exemplo prático relacionado à pergunta), e category (a categoria da pergunta). 
 
-      ${text.cards}
+Para cada flashcard, gere perguntas de quiz que sejam diretamente relacionadas ao conteúdo do flashcard, utilizando informações dos campos fornecidos de forma criativa. Por exemplo, transforme a "question" original em uma pergunta de múltipla escolha, crie uma pergunta de verdadeiro ou falso baseada no "practiceExample", ou use a "category" para formular uma pergunta contextual.
+
+Aqui estão os detalhes para a estruturação das perguntas do quiz:
+
+- Cada pergunta deve ter um ID único.
+- As perguntas devem refletir diretamente o conteúdo dos flashcards, promovendo um quiz interativo e informativo.
+- Inclua um array de opções de resposta, assegurando que uma delas seja a resposta correta, diretamente derivada do campo "answer" do flashcard.
+- Se aplicável, incorpore o "practiceExample" e a "category" para enriquecer a pergunta e fornecer contexto adicional.
+
+Segue o array de flashcards para a base das perguntas: [${serializedCards}]
+Com base no array de flashcards fornecido, por favor, crie perguntas de quiz interativas, substituindo os placeholders pelos valores reais dos flashcards. Para cada flashcard, gere uma pergunta que utilize diretamente sua pergunta, resposta, exemplo prático e categoria, conforme aplicável. Aqui está um exemplo de como os dados dos flashcards devem ser aplicados nas perguntas do quiz:
 
 
-Notas para Uso:
 
-Utilize o array fornecido de flashcards para criar perguntas variadas de quiz. Inclua diferentes tipos de perguntas, como múltipla escolha, verdadeiro ou falso, ou outras apropriadas.
-Forneça opções de resposta para cada pergunta, garantindo que uma delas seja a resposta correta.
-Utilize os campos practiceExample e category para adicionar contexto ou detalhes às perguntas, quando aplicável.
-Apresente as perguntas, opções de resposta e indique claramente qual é a resposta correta.
-Retorne o resultado em formato JSON.
+Estruture a resposta em JSON da seguinte forma:
 
-      `;
+{
+  "questions": [
+    {
+      "id": "ID da questão",
+      "question": "Texto da questão",
+      "options": ["Opção 1", "Opção 2", "Opção 3", "Opção 4"],
+      "answer": "Opção correta"
+    }
+    // Repita para cada flashcard fornecido
+  ],
+}
+Por favor, mantenha a resposta focada e direta, utilizando apenas as informações dos flashcards para criar as perguntas do quiz. O objetivo é maximizar a interatividade e relevância do conteúdo dos flashcards no quiz. Me retorne apenas o resultado em formato JSON.`;
       return prompt;
     }
   }

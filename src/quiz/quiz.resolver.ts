@@ -1,14 +1,13 @@
 import { UseGuards } from '@nestjs/common';
-import { Resolver, Args, Mutation, Query } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 import {
-  Quiz,
-  OwnerQuizInput,
-  CreateQuizInput,
-  DeleteQuizResult,
-  DeleteQuizInput,
-  DeleteQuizSuccess,
   DeleteQuizError,
+  DeleteQuizInput,
+  DeleteQuizResult,
+  DeleteQuizSuccess,
+  OwnerQuizInput,
+  Quiz,
 } from './entities/Quiz.entity';
 import { QuizService } from './quiz.service';
 
@@ -35,10 +34,10 @@ export class QuizResolver {
 
   @Mutation(() => Quiz)
   async createQuiz(
-    @Args({ name: 'input', type: () => CreateQuizInput })
-    data: CreateQuizInput,
+    @Args({ name: 'input', type: () => String })
+    deckId: string,
   ): Promise<Quiz> {
-    return this.quizService.createQuiz(data);
+    return this.quizService.createQuiz(deckId);
   }
 
   @Mutation(() => DeleteQuizResult)

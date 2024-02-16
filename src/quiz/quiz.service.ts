@@ -1,26 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { OpenAiService } from 'src/openai/openai.service';
-import {
-  Quiz,
-  QuizDocument,
-  OwnerQuizInput,
-  CreateQuizInput,
-} from './entities/Quiz.entity';
 import { Model } from 'mongoose';
+import { OpenAiService } from 'src/openai/openai.service';
+import { OwnerQuizInput, Quiz, QuizDocument } from './entities/Quiz.entity';
 
 import { InjectModel } from '@nestjs/mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { v1 as uuidv1 } from 'uuid';
 import { ChatCompletionResponseMessage } from 'openai';
+import { v4 as uuidv4 } from 'uuid';
+import { DeckService } from './../deck/deck.service';
 @Injectable()
 export class QuizService {
   constructor(
     private readonly openAiService: OpenAiService,
+    private readonly deckService: DeckService,
     @InjectModel(Quiz.name)
     private readonly quizModel: Model<QuizDocument>,
   ) {}
 
-  formatGptAnswer<T>(completion: ChatCompletionResponseMessage): T {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  formatGptAnswer(completion: ChatCompletionResponseMessage) {
     let quizObject;
     try {
       quizObject = JSON.parse(completion.content);
@@ -28,21 +25,34 @@ export class QuizService {
       throw new Error('Erro ao avaliar o código JavaScript.');
     }
     console.log(quizObject);
-    return quizObject?.Quiz as T;
+    return quizObject;
   }
-  async createQuiz(quizQuestions: CreateQuizInput): Promise<Quiz> {
-    console.log('SERVICE LEVEL', quizQuestions);
-    const rawAnswer = await this.openAiService.getGptAnswer(quizQuestions);
 
-    const quizWithoutId = this.formatGptAnswer<Quiz>(rawAnswer);
+  async createQuiz(deckId: string): Promise<Quiz> {
+    const { cards, owner } = await this.deckService.findDeckById(deckId);
+    const gptInput = {
+      deckAssociatedId: deckId,
+      cards,
+      owner,
+    };
+    const question = gptInput.cards.map((card) => {
+      question: card.question;
+      answer: card.answer;
+    });
+    console.log('SERIALIZED', question);
+    console.log('CARDS:', gptInput.cards);
+    const rawAnswer = await this.openAiService.getGptAnswer(gptInput);
+    console.log(rawAnswer);
+
+    const quizWithoutId = this.formatGptAnswer(rawAnswer);
 
     const quiz = {
-      ...quizWithoutId,
-      owner: quizQuestions.owner,
-      deckAssociatedId: quizQuestions.deckAssociatedId,
+      owner,
+      deckAssociatedId: deckId,
       id: uuidv4(),
+      ...quizWithoutId,
     };
-    console.log(quiz);
+    console.log('QUIZZ', quiz);
     const created = await this.quizModel.create(quiz);
     return created.toObject<Quiz>();
   }

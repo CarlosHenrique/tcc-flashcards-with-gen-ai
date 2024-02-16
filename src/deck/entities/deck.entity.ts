@@ -1,16 +1,6 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Field, InputType, ObjectType, createUnionType } from '@nestjs/graphql';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import {
-  Field,
-  Float,
-  InputType,
-  InterfaceType,
-  ObjectType,
-  PartialType,
-  Scalar,
-  createUnionType,
-} from '@nestjs/graphql';
-import { GraphQLScalarType } from 'graphql';
 
 @ObjectType()
 @Schema()
@@ -98,9 +88,6 @@ export class CreateCardInput {
 
   @Field()
   answer!: string;
-
-  @Field()
-  answerExample!: string;
 
   @Field()
   practiceExample!: string;

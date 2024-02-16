@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
 import { OpenAiService } from 'src/openai/openai.service';
 import {
+  CreateDeckInput,
   Deck,
   DeckDocument,
   OwnerDeckInput,
-  CreateDeckInput,
 } from './entities/deck.entity';
-import { Model } from 'mongoose';
 
 import { InjectModel } from '@nestjs/mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { v1 as uuidv1 } from 'uuid';
 import { ChatCompletionResponseMessage } from 'openai';
+import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class DeckService {
   constructor(
@@ -33,7 +32,7 @@ export class DeckService {
   async createDeck(deckQuestions: CreateDeckInput): Promise<Deck> {
     console.log('SERVICE LEVEL', deckQuestions);
     const rawAnswer = await this.openAiService.getGptAnswer(deckQuestions);
-
+    console.log(rawAnswer);
     const deckWithoutId = this.formatGptAnswer<Deck>(rawAnswer);
 
     const deck = {

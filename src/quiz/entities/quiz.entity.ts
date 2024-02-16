@@ -1,8 +1,8 @@
-import { ObjectType, Field, InputType, createUnionType } from '@nestjs/graphql';
-
+import { Field, InputType, ObjectType, createUnionType } from '@nestjs/graphql';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { CreateCardInput } from 'src/deck/entities/deck.entity';
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Question } from './question.entity';
 
 @ObjectType()
 @Schema()
@@ -24,24 +24,6 @@ export class Quiz {
   owner!: string;
 }
 
-@ObjectType()
-export class Question {
-  @Field()
-  id!: string;
-
-  @Field()
-  @Prop({ required: true })
-  question!: string;
-
-  @Field()
-  @Prop({ required: true })
-  answer!: string;
-
-  @Field(() => [String])
-  @Prop({ required: true })
-  options!: string[];
-}
-
 @InputType()
 export class CreateQuizInput {
   @Field()
@@ -50,8 +32,8 @@ export class CreateQuizInput {
   @Field()
   owner!: string;
 
-  @Field(() => [CreateCardInput])
-  cards!: CreateCardInput[];
+  @Field(() => [CreateCardInput], { nullable: true })
+  cards?: CreateCardInput[];
 }
 
 @InputType()
