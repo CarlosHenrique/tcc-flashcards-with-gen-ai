@@ -39,7 +39,7 @@ export class QuizService {
       question: card.question;
       answer: card.answer;
     });
-    console.log('SERIALIZED', question);
+    console.log(question);
     console.log('CARDS:', gptInput.cards);
     const rawAnswer = await this.openAiService.getGptAnswer(gptInput);
     console.log(rawAnswer);
