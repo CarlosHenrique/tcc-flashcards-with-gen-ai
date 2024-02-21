@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
-import { OpenAIApi, Configuration } from 'openai';
-import { BoardQuestionInput, OpenAiOptions } from './entities/openai.entity';
+import {
+  ChatCompletionResponseMessage,
+  Configuration,
+  OpenAIApi,
+} from 'openai';
+import { OpenAiOptions } from './entities/openai.entity';
 
-import { CreateTaskInput } from 'src/board/entities/board.entity';
+import { CreateDeckInput } from 'src/deck/entities/deck.entity';
+import { CreateQuizInput } from 'src/quiz/entities/Quiz.entity';
 
 @Injectable()
 export class OpenAiService {
@@ -17,172 +22,104 @@ export class OpenAiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  formatCompletion(completion) {
-    let cardsArray;
-    try {
-      cardsArray = JSON.parse(completion.content);
-    } catch (error) {
-      throw new Error('Erro ao avaliar o código JavaScript.');
-    }
-
-    return cardsArray;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  createPrompt(
-    text: BoardQuestionInput | CreateTaskInput,
-    numberOfTasks?: number,
-  ) {
+  createPrompt(text: CreateDeckInput | CreateQuizInput) {
     // if ('question' in input && 'boardId' in input)
-    if ('acceptanceCriteria' in text) {
+    if ('theme' in text) {
       const prompt = `
-    Como Product Owner de uma empresa renomada, sua experiência é fundamental para ajudar Roger a desestruturar uma tarefa do projeto dele baseado na metodologia SCRUM. Roger está com a tarefa: "${
-      text.title
-    }"  e ele precisa criar dividir ela em subtarefas .
+      
+      Preciso criar um objeto JSON para um deck de flashcards personalizados e gostaria de sua ajuda para desenvolvê-los de forma específica e detalhada. Aqui estão as informações e preferências que tenho em mente:
 
-Com base na breve descrição de Roger sobre a tarefa: "${
-        text.description
-      }", você pode detalhar as subtarefas necessárias para que Roger alcance seus objetivos, lembre-se de detalhar o máximo possível as tarefas. Essas tarefas serão transformadas em cards que serão utilizados na metodologia SCRUM, sendo todos eles iniciados no backlog.
-Roger, gostaria de receber uma estrutura de saída similar a essas tasks, o numero de tasks atuais são: ${numberOfTasks} você deverá criar o id das subtasks a partir do numero de tasks passado:
-    {
-      "id": < aqui você utilizará essa informação ${
-        text.id
-      } mas adequará ao numero de tasks que é igual a ${numberOfTasks} (exemplo IN-${
-        numberOfTasks + 1
-      }) >,
-      "title": "Aprender sobre Callbacks",
-      "description": "Estudar callbacks, uma técnica fundamental para trabalhar com funções assíncronas em JavaScript. Recomenda-se o vídeo 'JavaScript Callbacks Explained!' disponível em: https://www.youtube.com/watch?v=QRq2zMHlBz4",
-      "storyPoints": 1,
-      "acceptanceCriteria": "Entender como utilizar callbacks para realizar operações assíncronas",
-      "dueDate": "03/08/2023",
-      "label": "backlog",
-      "parentTask": ${text.id}
-    },
-    {
-      "id": < aqui você utilizará essa informação ${
-        text.id
-      } mas adequará ao numero de tasks que é igual a ${numberOfTasks}(exemplo IN-${
-        numberOfTasks + 2
-      }) >,
-      "title": "Aprender sobre Async/Await",
-      "description": "Estudar a sintaxe e a utilização do recurso Async/Await do JavaScript permitindo escrever código assíncrono de forma síncrona. Para auxiliar, sugere-se ler a documentação oficial disponível em: https://developer.mozilla.org/pt-BR/docs/Learn/JavaScript/Asynchronous/Async_await",
-      "storyPoints": 3,
-      "acceptanceCriteria": "Ser capaz de utilizar o Async/Await para simplificar a escrita de código assíncrono",
-      "dueDate": "03/08/2023",
-      "label": "backlog",
-      "parentTask":  ${text.id}
-    }
+Estrutura do Objeto Deck:
+
+Crie o deck de flashcards em um objeto JSON com a seguinte estrutura, segue o exemplo:
+
+{
+  "deck": {
+    "id": "ID único do deck",
     
-    A resposta que você irá retornar será em um bloco de  array que contém os cards gerados, lembre-se que array retornado deve estar na linguagem javascript, abaixo segue um exemplo de como essa resposta poderia ser, lembre-se de adicionar o parentTask de cada task, siga ela estritamente retornando apenas o [cards gerados]: 
-    [
+    "theme": "Tema do deck",
+    "difficulty": "Nível de dificuldade (Iniciante, Intermediário, Avançado)",
+    "cards": [
       {
-        "id":  JS-2,
-        "title": "Aprender sobre Promises",
-        "description": "Estudar o conceito de Promises no JavaScript. Pode-se utilizar o artigo 'Understanding Promises in JavaScript' como referência: https://scotch.io/tutorials/javascript-promises-for-dummies",
-        "storyPoints": 2,
-        "acceptanceCriteria": "Ser capaz de criar e utilizar Promises para realizar tarefas assíncronas",
-        "dueDate": "03/08/2023",
-        "label": "backlog",
-        "parentTask": "JS-1"
-      },
-      {
-        "id":  JS-3,
-        "title": "Aprender sobre Callbacks",
-        "description": "Estudar callbacks, uma técnica fundamental para trabalhar com funções assíncronas em JavaScript. Recomenda-se o vídeo 'JavaScript Callbacks Explained!' disponível em: https://www.youtube.com/watch?v=QRq2zMHlBz4",
-        "storyPoints": 1,
-        "acceptanceCriteria": "Entender como utilizar callbacks para realizar operações assíncronas",
-        "dueDate": "03/08/2023",
-        "label": "backlog",
-        "parentTask": "JS-1"
+        "id": "ID único do card (number)",
+        "question": "Texto da pergunta do flashcard",
+        "answer": "Texto da resposta do flashcard",
+        "practiceExample": "Descrição de exemplos práticos ou estudos de caso, se aplicável",
+        "category": "Categoria relacionada ao flashcard"
+      }
+      
+    ]
+  }
+}
+Além de seguir esse exemplo você precisa incluir os seguintes detalhes:
 
-      }]`;
+
+Tema dos Flashcards: ${text.theme}
+Nível de Conhecimento Atual:  ${text.knowledgeLevel}
+Objetivo de Aprendizado:  ${text.goal}
+Estilo de Pergunta Preferido:  ${text.typeOfQuestion}
+Tópicos Específicos a serem Abordados:  ${text.topicsToBeIncluded}
+Limitações ou Restrições:  ${text.limitations}
+Quantidade de flashcards desejados: ${text.numberOfCards}
+Utilize as informações fornecidas para gerar um conjunto de flashcards no formato JSON especificado, com um ID único para cada card dentro do deck.Lembre-se de garantir que haverá a quantidade solicitada de flashcards dentro de cards. Seguindo todas as informações, me retorne apenas o objeto JSON,Obrigado!
+
+
+      `;
 
       return prompt;
-    } else if ('owner' in text) {
+    } else if ('deckAssociatedId' in text) {
+      const serializedCards = JSON.stringify(text.cards);
       const prompt = `
-    Como Product Owner de uma empresa renomada, sua experiência é fundamental para ajudar Roger a estruturar seu projeto baseado na metodologia SCRUM. Roger está iniciando o projeto "${text.projectName}" com duração prevista de ${text.duration} a partir de hoje. Ele se dedicará nos dias ${text.daysForWork}, enquanto ${text.people} pessoas participarão do projeto.
+Olá, ChatGPT! Eu estou criando um quiz interativo e preciso da sua ajuda para gerar perguntas dinâmicas e envolventes com base em um array específico de flashcards. Cada flashcard contém os seguintes campos: question (a pergunta original), answer (a resposta correta), practiceExample (um exemplo prático relacionado à pergunta), e category (a categoria da pergunta). 
 
-Com base na breve descrição de Roger sobre o projeto: "${text.description}", você pode detalhar as tarefas necessárias para que Roger alcance seus objetivos, lembre-se de detalhar o máximo possivel as tarefas. Essas tarefas serão transformadas em cards que serão utilizados na metodologia SCRUM, sendo todos eles iniciados no backlog.
-Roger, gostaria de receber uma estrutura de saída similar a essas tasks:
+Para cada flashcard, gere perguntas de quiz que sejam diretamente relacionadas ao conteúdo do flashcard, utilizando informações dos campos fornecidos de forma criativa. Por exemplo, transforme a "question" original em uma pergunta de múltipla escolha, crie uma pergunta de verdadeiro ou falso baseada no "practiceExample", ou use a "category" para formular uma pergunta contextual.
+
+Aqui estão os detalhes para a estruturação das perguntas do quiz:
+
+- Cada pergunta deve ter um ID único.
+- As perguntas devem refletir diretamente o conteúdo dos flashcards, promovendo um quiz interativo e informativo.
+- Inclua um array de opções de resposta, assegurando que uma delas seja a resposta correta, diretamente derivada do campo "answer" do flashcard.
+- Se aplicável, incorpore o "practiceExample" e a "category" para enriquecer a pergunta e fornecer contexto adicional.
+
+Segue o array de flashcards para a base das perguntas: [${serializedCards}]
+Com base no array de flashcards fornecido, por favor, crie perguntas de quiz interativas, substituindo os placeholders pelos valores reais dos flashcards. Para cada flashcard, gere uma pergunta que utilize diretamente sua pergunta, resposta, exemplo prático e categoria, conforme aplicável. Aqui está um exemplo de como os dados dos flashcards devem ser aplicados nas perguntas do quiz:
+
+
+
+Estruture a resposta em JSON da seguinte forma:
+
+{
+  "questions": [
     {
-      "id": <Aqui você irá criar um acronimo de acordo com o titulo do board. exemplo: IN-1>
-      "title": "Aprender sobre Callbacks",
-      "description": "Estudar callbacks, uma técnica fundamental para trabalhar com funções assíncronas em JavaScript. Recomenda-se o vídeo 'JavaScript Callbacks Explained!' disponível em: https://www.youtube.com/watch?v=QRq2zMHlBz4",
-      "storyPoints": 1,
-      "acceptanceCriteria": "Entender como utilizar callbacks para realizar operações assíncronas",
-      "dueDate": "03/08/2023",
-      "label": "backlog"
-    },
-    {
-      "id": <Aqui você irá criar um acronimo de acordo com o titulo do board. exemplo: IN-1>
-      "title": "Aprender sobre Async/Await",
-      "description": "Estudar a sintaxe e a utilização do recurso Async/Await do JavaScript permitindo escrever código assíncrono de forma síncrona. Para auxiliar, sugere-se ler a documentação oficial disponível em: https://developer.mozilla.org/pt-BR/docs/Learn/JavaScript/Asynchronous/Async_await",
-      "storyPoints": 3,
-      "acceptanceCriteria": "Ser capaz de utilizar o Async/Await para simplificar a escrita de código assíncrono",
-      "dueDate": "03/08/2023",
-      "label": "backlog"
+      "id": "ID da questão",
+      "question": "Texto da questão",
+      "options": ["Opção 1", "Opção 2", "Opção 3", "Opção 4"],
+      "answer": "Opção correta"
     }
-    
-    A resposta que você irá retornar será em um bloco de  array que contém os cards gerados, lembre-se que array retornado deve estar na linguagem javascript, abaixo segue um exemplo de como essa reposta poderia, siga ela estrictamente retornando apenas o [cards gerados]: 
-    [
-      {
-        "id":  JS-1
-        "title": "Aprender sobre Promises",
-        "description": "Estudar o conceito de Promises no JavaScript. Pode-se utilizar o artigo 'Understanding Promises in JavaScript' como referência: https://scotch.io/tutorials/javascript-promises-for-dummies",
-        "storyPoints": 2,
-        "acceptanceCriteria": "Ser capaz de criar e utilizar Promises para realizar tarefas assíncronas",
-        "dueDate": "03/08/2023",
-        "label": "backlog"
-      },
-      {
-        "id":  JS-2
-        "title": "Aprender sobre Callbacks",
-        "description": "Estudar callbacks, uma técnica fundamental para trabalhar com funções assíncronas em JavaScript. Recomenda-se o vídeo 'JavaScript Callbacks Explained!' disponível em: https://www.youtube.com/watch?v=QRq2zMHlBz4",
-        "storyPoints": 1,
-        "acceptanceCriteria": "Entender como utilizar callbacks para realizar operações assíncronas",
-        "dueDate": "03/08/2023",
-        "label": "backlog"
-      }]
-    `;
+    // Repita para cada flashcard fornecido
+  ],
+}
+Por favor, mantenha a resposta focada e direta, utilizando apenas as informações dos flashcards para criar as perguntas do quiz. O objetivo é maximizar a interatividade e relevância do conteúdo dos flashcards no quiz. Me retorne apenas o resultado em formato JSON.`;
       return prompt;
     }
   }
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  async getBoardBasedOnQuestions(question: BoardQuestionInput) {
+  async getGptAnswer(
+    question: CreateDeckInput | CreateQuizInput,
+  ): Promise<ChatCompletionResponseMessage> {
     try {
+      console.log('OPENAI SERVICE', question);
+      const prompt = this.createPrompt(question);
+      console.log('formated', prompt);
       const completion = await this.openAiApi.createChatCompletion({
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: this.createPrompt(question) }],
       });
 
-      const gptAnwser = completion.data.choices[0].message;
+      const gptAnswer = completion.data.choices[0].message;
 
-      const cardsArray = this.formatCompletion(gptAnwser);
-
-      cardsArray.forEach((card) => (card.dueDate = new Date()));
-
-      return cardsArray;
+      return gptAnswer;
     } catch (error) {
-      throw new Error(error);
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  async getSubTasksBasedOnTask(task: CreateTaskInput[], numberOfTasks: number) {
-    try {
-      const completion = await this.openAiApi.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'user', content: this.createPrompt(task[0], numberOfTasks) },
-        ],
-      });
-      const gptAnwser = completion.data.choices[0].message;
-
-      const subtasksArray = this.formatCompletion(gptAnwser);
-      subtasksArray.forEach((subtask) => (subtask.dueDate = new Date()));
-      return subtasksArray;
-    } catch (error) {
-      //   console.error(error);
       throw new Error(error);
     }
   }
