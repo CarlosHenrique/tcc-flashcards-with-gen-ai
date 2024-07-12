@@ -3,14 +3,9 @@ import { DeckService } from './deck.service';
 import { UseGuards } from '@nestjs/common/decorators';
 import {
   Deck,
-  DeleteDeckError,
-  DeleteDeckInput,
-  DeleteDeckResult,
-  DeleteDeckSuccess,
-  OwnerDeckInput,
-  CreateDeckInput,
+  CreateUserDeckResponseInput,
+  UserDeckResponse,
 } from './entities/deck.entity';
-
 import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -19,11 +14,8 @@ export class DeckResolver {
   constructor(private readonly deckService: DeckService) {}
 
   @Query(() => [Deck])
-  async getAllDecksFromUser(
-    @Args({ name: 'input', type: () => OwnerDeckInput })
-    data: OwnerDeckInput,
-  ): Promise<Deck[]> {
-    return this.deckService.findDecksByEmail(data);
+  async getAllDecks(): Promise<Deck[]> {
+    return this.deckService.findAllDecks();
   }
 
   @Query(() => Deck)
@@ -34,25 +26,18 @@ export class DeckResolver {
     return this.deckService.findDeckById(id);
   }
 
-  @Mutation(() => Deck)
-  async createDeck(
-    @Args({ name: 'input', type: () => CreateDeckInput })
-    data: CreateDeckInput,
-  ): Promise<Deck> {
-    return this.deckService.createDeck(data);
+  @Mutation(() => UserDeckResponse)
+  async createUserDeckResponse(
+    @Args({ name: 'input', type: () => CreateUserDeckResponseInput })
+    data: CreateUserDeckResponseInput,
+  ): Promise<UserDeckResponse> {
+    return this.deckService.createUserDeckResponse(data);
   }
 
-  @Mutation(() => DeleteDeckResult)
-  async DeleteDeckBasedOnId(
-    @Args({ name: 'input', type: () => DeleteDeckInput })
-    data: DeleteDeckInput,
-  ): Promise<typeof DeleteDeckResult> {
-    try {
-      await this.deckService.deleteDeckBasedOnId(data.deckId, data.userId);
-      return Object.assign(new DeleteDeckSuccess(), {});
-    } catch (error) {
-      const message = error;
-      return Object.assign(new DeleteDeckError(), { message });
-    }
+  @Query(() => [UserDeckResponse])
+  async getUserDeckResponses(
+    @Args({ name: 'userId', type: () => String }) userId: string,
+  ): Promise<UserDeckResponse[]> {
+    return this.deckService.findUserDeckResponses(userId);
   }
 }

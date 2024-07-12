@@ -153,36 +153,47 @@ export class CreateCardInput {
 }
 
 @InputType()
-export class OwnerDeckInput {
+export class CreateUserDeckResponseInput {
   @Field()
-  owner!: string;
-}
+  userId!: string;
 
-@InputType()
-export class DeleteDeckInput {
   @Field()
   deckId!: string;
 
+  @Field(() => [String])
+  selectedCardsIds!: string[];
+
   @Field()
-  userId!: string;
+  score!: number;
+
+  @Field(() => [CreateUserCardMetricsInput])
+  cardMetrics!: CreateUserCardMetricsInput[];
 }
 
-@ObjectType()
-export class DeleteDeckSuccess {
+@InputType()
+export class CreateUserCardMetricsInput {
   @Field()
-  _?: string;
-}
+  cardId!: string;
 
-@ObjectType()
-export class DeleteDeckError {
   @Field()
-  message!: string;
-}
+  repetitions!: number;
 
-export const DeleteDeckResult = createUnionType({
-  name: 'DeleteDeckResult',
-  types: () => [DeleteDeckSuccess, DeleteDeckError],
-});
+  @Field()
+  easiness!: number;
+
+  @Field()
+  interval!: number;
+
+  @Field(() => Date)
+  nextReviewDate!: Date;
+
+  @Field(() => Date)
+  lastReviewedDate!: Date;
+}
 
 export type DeckDocument = HydratedDocument<Deck>;
+export type UserDeckResponseDocument = HydratedDocument<UserDeckResponse>;
+
 export const DeckSchema = SchemaFactory.createForClass(Deck);
+export const UserDeckResponseSchema =
+  SchemaFactory.createForClass(UserDeckResponse);

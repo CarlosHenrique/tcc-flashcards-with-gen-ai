@@ -1,67 +1,53 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { OpenAiService } from 'src/openai/openai.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { v4 as uuidv4 } from 'uuid';
 import {
   CreateDeckInput,
   Deck,
   DeckDocument,
-  OwnerDeckInput,
+  CreateUserDeckResponseInput,
+  UserDeckResponse,
+  UserDeckResponseDocument,
 } from './entities/deck.entity';
 
-import { InjectModel } from '@nestjs/mongoose';
-import { ChatCompletionResponseMessage } from 'openai';
-import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class DeckService {
   constructor(
-    private readonly openAiService: OpenAiService,
     @InjectModel(Deck.name)
     private readonly deckModel: Model<DeckDocument>,
+    @InjectModel(UserDeckResponse.name)
+    private readonly userDeckResponseModel: Model<UserDeckResponseDocument>,
   ) {}
 
-  formatGptAnswer<T>(completion: ChatCompletionResponseMessage): T {
-    let deckObject;
-    try {
-      deckObject = JSON.parse(completion.content);
-    } catch (error) {
-      throw new Error('Erro ao avaliar o código JavaScript.');
-    }
-
-    return deckObject?.deck as T;
-  }
-  async createDeck(deckQuestions: CreateDeckInput): Promise<Deck> {
-    console.log('SERVICE LEVEL', deckQuestions);
-    const rawAnswer = await this.openAiService.getGptAnswer(deckQuestions);
-    console.log(rawAnswer);
-    const deckWithoutId = this.formatGptAnswer<Deck>(rawAnswer);
-
+  async createDeck(deckInput: CreateDeckInput): Promise<Deck> {
     const deck = {
-      ...deckWithoutId,
-      owner: 'chps',
+      ...deckInput,
       id: uuidv4(),
     };
-    console.log(deck);
     const created = await this.deckModel.create(deck);
     return created.toObject<Deck>();
   }
 
-  async findDecksByEmail(data: OwnerDeckInput): Promise<Deck[]> {
-    const found = await this.deckModel.find(data);
-    const decks = found.map((deck) => deck.toObject<Deck>());
-
-    return decks;
+  async findAllDecks(): Promise<Deck[]> {
+    const found = await this.deckModel.find().exec();
+    return found.map((deck) => deck.toObject<Deck>());
   }
 
   async findDeckById(id: string): Promise<Deck> {
-    const found = await this.deckModel.findOne({ id });
-
+    const found = await this.deckModel.findOne({ id }).exec();
     return found.toObject<Deck>();
   }
 
-  async deleteDeckBasedOnId(deckId: string, userUid: string): Promise<void> {
-    return await this.deckModel.findOneAndDelete({
-      id: deckId,
-      owner: userUid,
-    });
+  async createUserDeckResponse(
+    responseInput: CreateUserDeckResponseInput,
+  ): Promise<UserDeckResponse> {
+    const created = await this.userDeckResponseModel.create(responseInput);
+    return created.toObject<UserDeckResponse>();
+  }
+
+  async findUserDeckResponses(userId: string): Promise<UserDeckResponse[]> {
+    const found = await this.userDeckResponseModel.find({ userId }).exec();
+    return found.map((response) => response.toObject<UserDeckResponse>());
   }
 }
