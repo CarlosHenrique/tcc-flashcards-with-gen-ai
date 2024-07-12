@@ -13,17 +13,20 @@ export class Quiz {
 
   @Field()
   @Prop({ required: true })
-  deckAssociatedId!: string;
+  title!: string; // Título do Quiz
+
+  @Field()
+  @Prop({ required: true })
+  description!: string; // Descrição breve do que o quiz aborda
+
+  @Field()
+  @Prop({ required: true })
+  deckAssociatedId!: string; // ID do deck de flashcards associado
 
   @Field(() => [Question])
   @Prop({ required: true })
   questions!: Question[];
-
-  @Field()
-  @Prop({ required: true })
-  owner!: string;
 }
-
 @InputType()
 export class CreateQuizInput {
   @Field()
