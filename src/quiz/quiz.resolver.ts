@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 import {
@@ -24,6 +24,24 @@ export class QuizResolver {
     @Args({ name: 'id', type: () => String }) id: string,
   ): Promise<Quiz> {
     return this.quizService.findQuizById(id);
+  }
+
+  @Query(() => Quiz)
+  async getQuizByDeckAssociatedId(
+    @Args({ name: 'id', type: () => String }) id: string,
+  ): Promise<Quiz> {
+    const quiz = await this.quizService.findQuizByDeckAssociatedId(id);
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with deckAssociatedId ${id} not found`);
+    }
+
+    quiz.questions.forEach((question) => {
+      if (!question.answer) {
+        question.answer = question.type === 'multiple_choice' ? [] : '';
+      }
+    });
+    console.log('AFTER CHANGE', quiz);
+    return quiz;
   }
 
   @Mutation(() => Quiz)

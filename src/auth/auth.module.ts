@@ -12,7 +12,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule,
     JwtModule.register({
       secret: 'secret', //.env secret on future
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '2h' },
     }),
   ],
   providers: [AuthService, AuthResolver, JwtStrategy],

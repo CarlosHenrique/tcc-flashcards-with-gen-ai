@@ -31,16 +31,19 @@ export class Quiz {
 @Schema()
 export class UserQuizResponse {
   @Field(() => String)
-  @Prop({ required: true, ref: 'User' })
-  userId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Usuário
+  @Prop({ required: true })
+  userId!: string; // Referência ao modelo de Usuário
 
   @Field(() => String)
-  @Prop({ required: true, ref: 'Quiz' })
-  quizId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Quiz
+  @Prop({ required: true })
+  quizId!: string; // Referência ao modelo de Quiz (ajustado para string)
 
   @Field(() => [String])
   @Prop({ required: true })
-  selectedQuestionIds!: mongoose.Schema.Types.ObjectId[]; // IDs das perguntas selecionadas
+  selectedQuestionIds!: string[]; // IDs das perguntas selecionadas
+  @Field()
+  @Prop({ required: true })
+  totalQuizTime!: number;
 
   @Field()
   @Prop({ required: true })
@@ -59,8 +62,8 @@ export class UserQuizResponse {
 @Schema()
 export class UserQuestionMetrics {
   @Field(() => String)
-  @Prop({ required: true, ref: 'Question' })
-  questionId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Question
+  @Prop({ required: true })
+  questionId!: string; // Referência ao modelo de Question
 
   @Field()
   @Prop({ required: true, default: 0 })
@@ -69,6 +72,10 @@ export class UserQuestionMetrics {
   @Field()
   @Prop({ required: true, default: false })
   correct!: boolean; // Se a resposta foi correta ou não
+
+  @Field()
+  @Prop({ required: true })
+  timeSpent!: number; // Número de tentativas para responder a pergunta
 
   @Field(() => Date)
   @Prop({ default: Date.now })
@@ -128,6 +135,12 @@ export class CreateUserQuizResponseInput {
   @Field()
   score!: number;
 
+  @Field()
+  totalQuizTime!: number;
+
+  @Field(() => Date)
+  date!: Date; // Data da resposta do quiz
+
   @Field(() => [CreateUserQuestionMetricsInput])
   questionMetrics!: CreateUserQuestionMetricsInput[];
 }
@@ -142,8 +155,10 @@ export class CreateUserQuestionMetricsInput {
 
   @Field()
   correct!: boolean;
-}
 
+  @Field()
+  timeSpent!: number;
+}
 @InputType()
 export class OwnerQuizInput {
   @Field()
