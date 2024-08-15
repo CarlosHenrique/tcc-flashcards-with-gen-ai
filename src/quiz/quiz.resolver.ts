@@ -65,4 +65,12 @@ export class QuizResolver {
   ): Promise<UserQuizResponse[]> {
     return this.quizService.findUserQuizResponses(userId);
   }
+
+  @Query(() => UserQuizResponse, { nullable: true })
+  async getLastUserQuizResponse(
+    @Args({ name: 'userId', type: () => String }) userId: string,
+    @Args({ name: 'quizId', type: () => String }) quizId: string,
+  ): Promise<UserQuizResponse | null> {
+    return this.quizService.findLastUserQuizResponse(userId, quizId);
+  }
 }

@@ -82,4 +82,29 @@ export class QuizService {
     );
     return found.map((response) => response.toObject<UserQuizResponse>());
   }
+
+  async findLastUserQuizResponse(
+    userId: string,
+    quizId: string,
+  ): Promise<UserQuizResponse | null> {
+    const { id } = await this.quizModel
+      .findOne({ deckAssociatedId: quizId })
+      .exec();
+    const found = await this.userQuizResponseModel
+      .find({ userId, quizId: id })
+      .sort({ date: -1 }) // Ordena por data (mais recente primeiro)
+      .limit(1)
+      .exec(); // Limita a 1 documento (o mais recente)
+    if (found.length > 0) {
+      this.logger.log(
+        `Found last quiz response for user ID: ${userId} and quiz ID: ${id}`,
+      );
+      return found[0].toObject<UserQuizResponse>();
+    } else {
+      this.logger.warn(
+        `No quiz responses found for user ID: ${userId} and quiz ID: ${id}`,
+      );
+      return null;
+    }
+  }
 }
