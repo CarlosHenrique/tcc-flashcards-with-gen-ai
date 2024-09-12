@@ -4,6 +4,8 @@ import { DeckResolver } from './deck.resolver';
 import {
   Deck,
   DeckSchema,
+  PrivateDeck,
+  PrivateDeckSchema,
   UserDeckResponse,
   UserDeckResponseSchema,
 } from './entities/deck.entity';
@@ -14,6 +16,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forFeature([
       { name: Deck.name, schema: DeckSchema },
       { name: UserDeckResponse.name, schema: UserDeckResponseSchema },
+      { name: PrivateDeck.name, schema: PrivateDeckSchema },
     ]),
   ],
   providers: [DeckService, DeckResolver],

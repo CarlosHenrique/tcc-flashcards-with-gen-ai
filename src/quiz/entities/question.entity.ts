@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { createUnionType, Field, ObjectType } from '@nestjs/graphql';
 import { Prop } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { GraphQLScalarType, Kind } from 'graphql';
 
 // Define a scalar type for JSON

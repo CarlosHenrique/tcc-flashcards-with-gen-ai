@@ -5,12 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   CreateQuizInput,
   CreateUserQuizResponseInput,
+  PrivateQuiz,
+  PrivateQuizDocument,
   Quiz,
   QuizDocument,
   UserQuizResponse,
   UserQuizResponseDocument,
 } from './entities/quiz.entity';
-import { DeckService } from './../deck/deck.service';
 
 @Injectable()
 export class QuizService {
@@ -20,7 +21,8 @@ export class QuizService {
     @InjectModel(Quiz.name) private readonly quizModel: Model<QuizDocument>,
     @InjectModel(UserQuizResponse.name)
     private readonly userQuizResponseModel: Model<UserQuizResponseDocument>,
-    private readonly deckService: DeckService,
+    @InjectModel(PrivateQuiz.name)
+    private readonly privateQuizModel: Model<PrivateQuizDocument>,
   ) {}
 
   async createQuiz(data: CreateQuizInput): Promise<Quiz> {
@@ -41,6 +43,16 @@ export class QuizService {
     const found = await this.quizModel.find().exec();
     this.logger.log(`Found ${found.length} quizzes`);
     return found.map((quiz) => quiz.toObject<Quiz>());
+  }
+
+  async findAllQuizzesFromUser(id: string): Promise<PrivateQuiz[]> {
+    const found = await this.privateQuizModel
+      .find({
+        ownerId: id,
+      })
+      .exec();
+    this.logger.log(`Found ${found.length} quizzes for user ${id}`);
+    return found.map((quiz) => quiz.toObject<PrivateQuiz>());
   }
 
   async findQuizById(id: string): Promise<Quiz> {
@@ -81,6 +93,46 @@ export class QuizService {
       `Found ${found.length} user quiz responses for user ID: ${userId}`,
     );
     return found.map((response) => response.toObject<UserQuizResponse>());
+  }
+
+  async createQuizCopyForUser(userId: string): Promise<PrivateQuiz[]> {
+    const foundQuizzes = await this.quizModel.find().exec();
+    this.logger.log(`Found ${foundQuizzes.length} quizzes`);
+
+    const createdQuizzes: PrivateQuiz[] = await Promise.all(
+      foundQuizzes.map(async (quiz) => {
+        const { _id, ...quizData } = quiz.toObject<Quiz>(); // Clone and remove _id
+
+        // Create a new private quiz object for the user
+        const privateQuizData = {
+          id: quizData.id, // Copy Quiz ID
+          title: quizData.title, // Copy Quiz Title
+          description: quizData.description, // Copy Quiz Description
+          deckAssociatedId: quizData.deckAssociatedId, // Copy Deck ID
+          questions: [...quizData.questions], // Deep copy questions array
+          ownerId: userId, // Set userId as owner
+          isLocked: quizData.id !== '6dab54e6-321c-4c5a-b24f-e14f295cb334', // Conditional lock
+          score: 0, // Default score
+          lastAccessed: new Date(), // Set current date as last accessed
+        };
+
+        // Save the new quiz to the private collection
+        const newPrivateQuiz = new this.privateQuizModel(privateQuizData);
+        const savedPrivateQuiz = await newPrivateQuiz.save();
+
+        this.logger.debug('PrivateQuiz -->', privateQuizData);
+
+        this.logger.debug('newPrivateQuiz -->', newPrivateQuiz);
+
+        this.logger.debug('savedPrivateQuiz -->', savedPrivateQuiz);
+        return savedPrivateQuiz;
+      }),
+    );
+
+    this.logger.log(
+      `Created ${createdQuizzes.length} quizzes for user ${userId}`,
+    );
+    return createdQuizzes;
   }
 
   async findLastUserQuizResponse(

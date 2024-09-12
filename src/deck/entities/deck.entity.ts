@@ -15,11 +15,50 @@ export class Deck {
 
   @Field()
   @Prop({ required: true })
+  imageUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
   theme!: string;
 
   @Field(() => [Card])
   @Prop({ required: true })
   cards!: Card[];
+}
+@ObjectType()
+@Schema()
+export class PrivateDeck {
+  @Field()
+  @Prop({ required: true })
+  id!: string;
+
+  @Field()
+  @Prop({ required: true })
+  title!: string;
+
+  @Field()
+  @Prop({ required: true })
+  imageUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
+  theme!: string;
+
+  @Field(() => [Card])
+  @Prop({ required: true })
+  cards!: Card[];
+
+  @Field()
+  @Prop({ default: 0 })
+  score!: number;
+
+  @Field()
+  @Prop({ default: true })
+  isLocked!: boolean;
+
+  @Field(() => Date)
+  @Prop({ default: Date.now })
+  lastAccessed!: Date;
 }
 
 @ObjectType()
@@ -53,16 +92,16 @@ export class Card {
 @Schema()
 export class UserDeckResponse {
   @Field(() => String)
-  @Prop({ required: true, ref: 'User' })
-  userId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Usuário
+  @Prop({ required: true })
+  userId!: string; // Referência ao modelo de Usuário
 
   @Field(() => String)
-  @Prop({ required: true, ref: 'Deck' })
-  deckId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Deck
+  @Prop({ required: true })
+  deckId!: string; // Referência ao modelo de Deck
 
   @Field(() => [String])
   @Prop({ required: true })
-  selectedCardsIds!: mongoose.Schema.Types.ObjectId[]; // IDs dos cards selecionados
+  selectedCardsIds!: string[]; // IDs dos cards selecionados
 
   @Field()
   @Prop({ required: true })
@@ -193,7 +232,9 @@ export class CreateUserCardMetricsInput {
 
 export type DeckDocument = HydratedDocument<Deck>;
 export type UserDeckResponseDocument = HydratedDocument<UserDeckResponse>;
+export type PrivateDeckDocument = HydratedDocument<PrivateDeck>;
 
 export const DeckSchema = SchemaFactory.createForClass(Deck);
+export const PrivateDeckSchema = SchemaFactory.createForClass(PrivateDeck);
 export const UserDeckResponseSchema =
   SchemaFactory.createForClass(UserDeckResponse);

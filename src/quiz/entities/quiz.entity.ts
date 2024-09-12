@@ -29,6 +29,46 @@ export class Quiz {
 
 @ObjectType()
 @Schema()
+export class PrivateQuiz {
+  @Field()
+  @Prop({ required: true })
+  id!: string;
+
+  @Field()
+  @Prop({ required: true })
+  title!: string;
+
+  @Field()
+  @Prop({ required: true })
+  description!: string;
+
+  @Field()
+  @Prop({ required: true })
+  deckAssociatedId!: string;
+
+  @Field(() => [Question])
+  @Prop({ required: false })
+  questions!: Question[];
+
+  @Field(() => String)
+  @Prop({ required: true })
+  ownerId!: string; // Owner (User ID)
+
+  @Field()
+  @Prop({ default: true })
+  isLocked!: boolean; // If the quiz is locked or unlocked
+
+  @Field()
+  @Prop({ default: 0 })
+  score!: number; // User's score in the quiz
+
+  @Field(() => Date)
+  @Prop({ default: Date.now })
+  lastAccessed!: Date; // Last time the user accessed the quiz
+}
+
+@ObjectType()
+@Schema()
 export class UserQuizResponse {
   @Field(() => String)
   @Prop({ required: true })
@@ -193,7 +233,9 @@ export const DeleteQuizResult = createUnionType({
 
 export type QuizDocument = HydratedDocument<Quiz>;
 export type UserQuizResponseDocument = HydratedDocument<UserQuizResponse>;
+export type PrivateQuizDocument = HydratedDocument<PrivateQuiz>;
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
 export const UserQuizResponseSchema =
   SchemaFactory.createForClass(UserQuizResponse);
+export const PrivateQuizSchema = SchemaFactory.createForClass(PrivateQuiz);

@@ -4,6 +4,7 @@ import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 import {
   CreateQuizInput,
   CreateUserQuizResponseInput,
+  PrivateQuiz,
   Quiz,
   UserQuizResponse,
 } from './entities/quiz.entity';
@@ -17,6 +18,13 @@ export class QuizResolver {
   @Query(() => [Quiz])
   async getAllQuizzes(): Promise<Quiz[]> {
     return this.quizService.findAllQuizzes();
+  }
+
+  @Query(() => [PrivateQuiz])
+  async getAllQuizzesFromUser(
+    @Args({ name: 'id', type: () => String }) id: string,
+  ): Promise<PrivateQuiz[]> {
+    return this.quizService.findAllQuizzesFromUser(id);
   }
 
   @Query(() => Quiz)

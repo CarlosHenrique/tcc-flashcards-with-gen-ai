@@ -3,6 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DeckModule } from 'src/deck/deck.module';
 
 import {
+  PrivateQuizSchema,
+  PrivateQuiz,
   Quiz,
   QuizSchema,
   UserQuizResponse,
@@ -16,8 +18,8 @@ import { QuizService } from './quiz.service';
     MongooseModule.forFeature([
       { name: Quiz.name, schema: QuizSchema },
       { name: UserQuizResponse.name, schema: UserQuizResponseSchema },
+      { name: PrivateQuiz.name, schema: PrivateQuizSchema },
     ]),
-
     DeckModule,
   ],
   providers: [QuizService, QuizResolver],
