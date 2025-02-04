@@ -1,14 +1,13 @@
-import { UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 import {
-  DeleteQuizError,
-  DeleteQuizInput,
-  DeleteQuizResult,
-  DeleteQuizSuccess,
-  OwnerQuizInput,
+  CreateQuizInput,
+  CreateUserQuizResponseInput,
+  PrivateQuiz,
   Quiz,
-} from './entities/Quiz.entity';
+  UserQuizResponse,
+} from './entities/quiz.entity';
 import { QuizService } from './quiz.service';
 
 @UseGuards(JwtAuthGuard)
@@ -17,40 +16,45 @@ export class QuizResolver {
   constructor(private readonly quizService: QuizService) {}
 
   @Query(() => [Quiz])
+  async getAllQuizzes(): Promise<Quiz[]> {
+    return this.quizService.findAllQuizzes();
+  }
+
+  @Query(() => [PrivateQuiz])
   async getAllQuizzesFromUser(
-    @Args({ name: 'input', type: () => OwnerQuizInput })
-    data: OwnerQuizInput,
-  ): Promise<Quiz[]> {
-    return this.quizService.findQuizzesByEmail(data);
+    @Args({ name: 'id', type: () => String }) id: string,
+  ): Promise<PrivateQuiz[]> {
+    return this.quizService.findAllQuizzesFromUser(id);
   }
 
   @Query(() => Quiz)
-  async getQuizById(
-    @Args({ name: 'input', type: () => String })
-    id: string,
+  async getQuizByDeckAssociatedId(
+    @Args({ name: 'id', type: () => String }) id: string,
   ): Promise<Quiz> {
-    return this.quizService.findQuizById(id);
+    return this.quizService.findQuizByDeckAssociatedId(id);
   }
 
-  @Mutation(() => Quiz)
-  async createQuiz(
-    @Args({ name: 'input', type: () => String })
-    deckId: string,
-  ): Promise<Quiz> {
-    return this.quizService.createQuiz(deckId);
+  @Mutation(() => PrivateQuiz)
+  async unlockQuiz(
+    @Args({ name: 'quizId', type: () => String }) quizId: string,
+    @Args({ name: 'userId', type: () => String }) userId: string,
+  ): Promise<PrivateQuiz> {
+    return this.quizService.unlockQuizForUser(quizId, userId);
   }
 
-  @Mutation(() => DeleteQuizResult)
-  async DeleteQuizBasedOnId(
-    @Args({ name: 'input', type: () => DeleteQuizInput })
-    data: DeleteQuizInput,
-  ): Promise<typeof DeleteQuizResult> {
-    try {
-      await this.quizService.deleteQuizBasedOnId(data.quizId, data.userId);
-      return Object.assign(new DeleteQuizSuccess(), {});
-    } catch (error) {
-      const message = error;
-      return Object.assign(new DeleteQuizError(), { message });
-    }
+  @Mutation(() => UserQuizResponse)
+  async createUserQuizResponse(
+    @Args({ name: 'input', type: () => CreateUserQuizResponseInput })
+    data: CreateUserQuizResponseInput,
+  ): Promise<UserQuizResponse> {
+    return this.quizService.calculateAndSaveQuizResponse(data);
+  }
+
+  @Query(() => PrivateQuiz, { nullable: true })
+  async getQuizFromUser(
+    @Args('userId', { type: () => String }) userId: string,
+    @Args('deckId', { type: () => String }) deckId: string,
+  ): Promise<PrivateQuiz | null> {
+    return this.quizService.findQuizFromUser(userId, deckId);
   }
 }

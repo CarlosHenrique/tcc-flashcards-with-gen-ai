@@ -6,11 +6,15 @@ import { LoginUserInput } from './entities/auth.entity';
 
 import * as bcrypt from 'bcrypt';
 import { CreateUserInput, User } from 'src/user/entities/user.entity';
+import { QuizService } from 'src/quiz/quiz.service';
+import { DeckService } from 'src/deck/deck.service';
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private quizService: QuizService,
+    private deckService: DeckService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -44,6 +48,9 @@ export class AuthService {
     if (userExists) throw new Error('User already exists!');
     const password = await bcrypt.hash(user.password, 10);
 
-    return this.userService.createUser({ ...user, password });
+    const createdUser = this.userService.createUser({ ...user, password });
+    await this.quizService.createQuizCopyForUser(user.email);
+    await this.deckService.createDecksCopyForUser(user.email);
+    return createdUser;
   }
 }

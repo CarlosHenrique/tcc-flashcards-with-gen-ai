@@ -15,11 +15,54 @@ export class Deck {
 
   @Field()
   @Prop({ required: true })
+  imageUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
   theme!: string;
 
   @Field(() => [Card])
   @Prop({ required: true })
   cards!: Card[];
+}
+@ObjectType()
+@Schema()
+export class PrivateDeck {
+  @Field()
+  @Prop({ required: true })
+  id!: string;
+
+  @Field()
+  @Prop({ required: true })
+  ownerId!: string; // Identificador do usuário (manipulação privada)
+
+  @Field()
+  @Prop({ required: true })
+  title!: string;
+
+  @Field()
+  @Prop({ required: true })
+  imageUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
+  theme!: string;
+
+  @Field(() => [Card])
+  @Prop({ required: true })
+  cards!: Card[];
+
+  @Field()
+  @Prop({ default: 0 })
+  score!: number;
+
+  @Field()
+  @Prop({ default: true })
+  isLocked!: boolean;
+
+  @Field(() => Date)
+  @Prop({ default: Date.now })
+  lastAccessed!: Date;
 }
 
 @ObjectType()
@@ -53,16 +96,16 @@ export class Card {
 @Schema()
 export class UserDeckResponse {
   @Field(() => String)
-  @Prop({ required: true, ref: 'User' })
-  userId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Usuário
+  @Prop({ required: true })
+  userId!: string; // Referência ao modelo de Usuário
 
   @Field(() => String)
-  @Prop({ required: true, ref: 'Deck' })
-  deckId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Deck
+  @Prop({ required: true })
+  deckId!: string; // Referência ao modelo de Deck
 
   @Field(() => [String])
   @Prop({ required: true })
-  selectedCardsIds!: mongoose.Schema.Types.ObjectId[]; // IDs dos cards selecionados
+  selectedCardsIds!: string[]; // IDs dos cards selecionados
 
   @Field()
   @Prop({ required: true })
@@ -81,20 +124,16 @@ export class UserDeckResponse {
 @Schema()
 export class UserCardMetrics {
   @Field(() => String)
-  @Prop({ required: true, ref: 'Card' })
-  cardId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Card
+  @Prop({ required: true })
+  cardId!: string; // Referência ao modelo de Card
 
   @Field()
   @Prop({ required: true, default: 0 })
-  repetitions!: number; // Número de vezes que o card foi revisado
+  attempts!: number; // Número de vezes que o card foi revisado
 
   @Field()
-  @Prop({ required: true, default: 2.5 })
-  easiness!: number; // Fator de facilidade no algoritmo de repetição
-
-  @Field()
-  @Prop({ required: true, default: 1 })
-  interval!: number; // Intervalo para a próxima revisão
+  @Prop({ required: true })
+  score!: number; // Intervalo para a próxima revisão
 
   @Field(() => Date)
   @Prop({ required: true })
@@ -102,7 +141,7 @@ export class UserCardMetrics {
 
   @Field(() => Date)
   @Prop({ default: Date.now })
-  lastReviewedDate!: Date; // Data da última revisão
+  lastAttempt!: Date; // Data da última revisão
 }
 
 @InputType()
@@ -153,36 +192,49 @@ export class CreateCardInput {
 }
 
 @InputType()
-export class OwnerDeckInput {
+export class CreateUserDeckResponseInput {
   @Field()
-  owner!: string;
-}
+  userId!: string;
 
-@InputType()
-export class DeleteDeckInput {
   @Field()
   deckId!: string;
 
+  @Field(() => [String])
+  selectedCardsIds!: string[];
+
   @Field()
-  userId!: string;
+  score!: number;
+
+  @Field(() => [CreateUserCardMetricsInput])
+  cardMetrics!: CreateUserCardMetricsInput[];
+
+  @Field(() => Date)
+  date!: Date;
 }
 
-@ObjectType()
-export class DeleteDeckSuccess {
+@InputType()
+export class CreateUserCardMetricsInput {
   @Field()
-  _?: string;
-}
+  cardId!: string;
 
-@ObjectType()
-export class DeleteDeckError {
   @Field()
-  message!: string;
-}
+  attempts!: number;
 
-export const DeleteDeckResult = createUnionType({
-  name: 'DeleteDeckResult',
-  types: () => [DeleteDeckSuccess, DeleteDeckError],
-});
+  @Field()
+  score!: number;
+
+  @Field(() => Date)
+  nextReviewDate!: Date;
+
+  @Field(() => Date)
+  lastAttempt!: Date;
+}
 
 export type DeckDocument = HydratedDocument<Deck>;
+export type UserDeckResponseDocument = HydratedDocument<UserDeckResponse>;
+export type PrivateDeckDocument = HydratedDocument<PrivateDeck>;
+
 export const DeckSchema = SchemaFactory.createForClass(Deck);
+export const PrivateDeckSchema = SchemaFactory.createForClass(PrivateDeck);
+export const UserDeckResponseSchema =
+  SchemaFactory.createForClass(UserDeckResponse);

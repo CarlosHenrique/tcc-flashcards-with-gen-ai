@@ -7,7 +7,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GqlConfigService } from './config/graphql.config';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { OpenAiModule } from './openai/openai.module';
 import { DeckModule } from './deck/deck.module';
 import { QuizModule } from './quiz/quiz.module';
 import 'dotenv/config';
@@ -25,9 +24,6 @@ import 'dotenv/config';
     }),
     UserModule,
     AuthModule,
-    OpenAiModule.register({
-      apiKey: process.env.OPENAI_API_KEY,
-    }),
     DeckModule,
     QuizModule,
   ],

@@ -1,14 +1,23 @@
 import { Module } from '@nestjs/common';
 import { DeckService } from './deck.service';
 import { DeckResolver } from './deck.resolver';
-import { Deck, DeckSchema } from './entities/deck.entity';
+import {
+  Deck,
+  DeckSchema,
+  PrivateDeck,
+  PrivateDeckSchema,
+  UserDeckResponse,
+  UserDeckResponseSchema,
+} from './entities/deck.entity';
 import { MongooseModule } from '@nestjs/mongoose';
-import { OpenAiModule } from 'src/openai/openai.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Deck.name, schema: DeckSchema }]),
-    OpenAiModule,
+    MongooseModule.forFeature([
+      { name: Deck.name, schema: DeckSchema },
+      { name: UserDeckResponse.name, schema: UserDeckResponseSchema },
+      { name: PrivateDeck.name, schema: PrivateDeckSchema },
+    ]),
   ],
   providers: [DeckService, DeckResolver],
   exports: [DeckService, DeckResolver],
