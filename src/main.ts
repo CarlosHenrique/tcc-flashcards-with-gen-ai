@@ -8,7 +8,10 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   app.useLogger(logger);
   app.enableCors({
-    origin: 'http://localhost:3000', // Origem do seu frontend
+    origin: [
+      'http://localhost:3000',
+      'https://front-tcc-flashcard-and-quiz-with-ai.vercel.app',
+    ], // Origem do seu frontend
     credentials: true, // Permitir cookies
   });
   app.use(passport.initialize());
