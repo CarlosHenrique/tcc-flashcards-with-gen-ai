@@ -19,6 +19,10 @@ export class Deck {
 
   @Field()
   @Prop({ required: true })
+  videoUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
   theme!: string;
 
   @Field(() => [Card])
@@ -43,6 +47,10 @@ export class PrivateDeck {
   @Field()
   @Prop({ required: true })
   imageUrl!: string;
+
+  @Field()
+  @Prop({ required: true })
+  videoUrl!: string;
 
   @Field()
   @Prop({ required: true })
