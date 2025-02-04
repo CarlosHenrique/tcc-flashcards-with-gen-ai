@@ -15,6 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async validate(payload: any) {
+    console.log('✅ Token validado com sucesso:', payload);
     return { email: payload.email };
   }
 }

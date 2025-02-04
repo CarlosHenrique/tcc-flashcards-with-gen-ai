@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Args, Resolver, Mutation, Context, Query } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginResponse, LoginUserInput } from './entities/auth.entity';
 import { User, CreateUserInput } from 'src/user/entities/user.entity';
@@ -32,6 +32,10 @@ export class AuthResolver {
   @UseGuards(JwtAuthGuard)
   @Query(() => User)
   async verifyToken(@Context() context): Promise<User> {
+    console.log('🛠️ Usuário no contexto:', context.req.user); // Verificar se o usuário está correto
+    if (!context.req.user) {
+      throw new UnauthorizedException('Token inválido ou expirado');
+    }
     return context.req.user;
   }
 }

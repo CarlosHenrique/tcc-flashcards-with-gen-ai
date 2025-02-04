@@ -42,6 +42,7 @@ export class QuizService {
   async findAllQuizzes(): Promise<Quiz[]> {
     const found = await this.quizModel.find().exec();
     this.logger.log(`Found ${found.length} quizzes`);
+
     return found.map((quiz) => quiz.toObject<Quiz>());
   }
 
@@ -73,18 +74,180 @@ export class QuizService {
     this.logger.log(`Found quiz: ${found}`);
     return found.toObject<Quiz>();
   }
+  async findQuizFromUser(
+    userId: string,
+    deckId: string,
+  ): Promise<PrivateQuiz | null> {
+    const quiz = await this.privateQuizModel
+      .findOne({ ownerId: userId, deckAssociatedId: deckId })
+      .exec();
+    if (!quiz) {
+      this.logger.warn(
+        `No quiz found for user ID: ${userId} and deck ID: ${deckId}`,
+      );
+      return null;
+    }
+    this.logger.log(`Found quiz for user ID: ${userId} and deck ID: ${deckId}`);
+    return quiz.toObject<PrivateQuiz>();
+  }
 
   async deleteQuiz(quizId: string): Promise<void> {
     await this.quizModel.findOneAndDelete({ id: quizId }).exec();
     this.logger.log(`Deleted quiz with ID: ${quizId}`);
   }
-
-  async createUserQuizResponse(
+  async calculateAndSaveQuizResponse(
     data: CreateUserQuizResponseInput,
   ): Promise<UserQuizResponse> {
-    const created = await this.userQuizResponseModel.create(data);
-    this.logger.log(`Created user quiz response with ID: ${created.id}`);
-    return created.toObject<UserQuizResponse>();
+    const { userId, quizId, score } = data;
+    const newScore = Number(score); // 🔹 Garante que `score` é um número
+
+    console.log(
+      `✅ [calculateAndSaveQuizResponse] Iniciando processamento para UserID: ${userId}, QuizID: ${quizId}, Score: ${newScore}`,
+    );
+
+    // 🔹 1. Buscar o `privateQuiz`
+    const privateQuiz = await this.privateQuizModel.findOne({
+      id: quizId,
+      ownerId: userId,
+    });
+
+    if (!privateQuiz) {
+      console.error(
+        `❌ [calculateAndSaveQuizResponse] Private quiz não encontrado para ID: ${quizId}`,
+      );
+      throw new Error('Private quiz not found.');
+    }
+
+    console.log(
+      `🎯 [calculateAndSaveQuizResponse] Quiz encontrado: ${privateQuiz.title}, Score Atual: ${privateQuiz.score}, Novo Score: ${newScore}`,
+    );
+
+    // 🔹 2. Criar o objeto de atualização
+    const updateFields: Partial<{ score: number; lastAccessed: Date }> = {
+      lastAccessed: new Date(), // Sempre atualiza `lastAccessed`
+    };
+
+    if (newScore > privateQuiz.score) {
+      updateFields.score = newScore; // Atualiza `score` apenas se for maior
+    }
+
+    // 🔹 3. Atualizar o `privateQuiz`
+    await this.privateQuizModel.findOneAndUpdate(
+      { id: quizId, ownerId: userId },
+      { $set: updateFields },
+      { new: true },
+    );
+
+    // 🔹 4. Se o score for >= 70, tentar desbloquear o próximo quiz
+    if (newScore >= 70) {
+      console.log(
+        `🔓 [calculateAndSaveQuizResponse] Tentando desbloquear próximo quiz...`,
+      );
+
+      const currentPhaseNumber = this.getPhaseOrder(privateQuiz.title);
+      console.log(
+        `🔍 [calculateAndSaveQuizResponse] Fase atual identificada: ${currentPhaseNumber}`,
+      );
+
+      if (currentPhaseNumber !== null) {
+        // Buscar o próximo quiz baseado no título
+        const nextQuiz = await this.privateQuizModel.findOne({
+          ownerId: userId,
+          title: {
+            $regex: new RegExp(`^Fase ${currentPhaseNumber + 1}:`, 'i'),
+          },
+        });
+
+        console.log(
+          `🔍 [calculateAndSaveQuizResponse] Próximo quiz encontrado: ${
+            nextQuiz ? nextQuiz.title : 'Nenhum encontrado'
+          }`,
+        );
+
+        if (nextQuiz) {
+          if (nextQuiz.isLocked) {
+            console.log(
+              `🔓 [calculateAndSaveQuizResponse] Desbloqueando quiz ${nextQuiz.title}`,
+            );
+            await this.privateQuizModel.findOneAndUpdate(
+              { id: nextQuiz.id, ownerId: userId },
+              { $set: { isLocked: false } },
+              { new: true },
+            );
+            console.log(
+              `✅ [calculateAndSaveQuizResponse] Quiz "${nextQuiz.title}" desbloqueado para o usuário ${userId}`,
+            );
+          } else {
+            console.log(
+              `⚠️ [calculateAndSaveQuizResponse] Quiz "${nextQuiz.title}" já estava desbloqueado.`,
+            );
+          }
+        } else {
+          console.error(
+            `❌ [calculateAndSaveQuizResponse] Nenhum próximo quiz encontrado para "Fase ${
+              currentPhaseNumber + 1
+            }:"`,
+          );
+        }
+      } else {
+        console.error(
+          `❌ [calculateAndSaveQuizResponse] Não foi possível determinar o número da fase do quiz atual.`,
+        );
+      }
+    }
+
+    // 🔹 5. Criar a resposta do usuário para o quiz
+    const userQuizResponse = await this.userQuizResponseModel.create({
+      userId,
+      quizId,
+      selectedQuestionIds: data.selectedQuestionIds,
+      totalQuizTime: data.totalQuizTime,
+      score: newScore, // Pegamos o `score` diretamente do frontend
+      questionMetrics: data.questionMetrics.map((metric) => ({
+        questionId: metric.questionId,
+        attempts: metric.attempts,
+        correct: metric.correct,
+        timeSpent: metric.timeSpent,
+        lastAttemptDate: data.date,
+      })),
+      date: data.date,
+    });
+
+    return userQuizResponse.toObject<UserQuizResponse>();
+  }
+
+  // 🔹 Função para extrair o número da fase do título
+  private getPhaseOrder(title: string): number | null {
+    console.log(`📌 [getPhaseOrder] Extraindo fase do título: ${title}`);
+    const match = title.match(/Fase (\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  async unlockQuizForUser(
+    quizId: string,
+    userId: string,
+  ): Promise<PrivateQuiz> {
+    const quiz = await this.findQuizById(quizId);
+    const privateQuiz = await this.privateQuizModel.findOne({
+      id: quizId,
+      ownerId: userId,
+    });
+
+    if (!privateQuiz) {
+      const newPrivateQuiz = new this.privateQuizModel({
+        ...quiz,
+        ownerId: userId,
+        isLocked: false,
+      });
+
+      return newPrivateQuiz.save();
+    }
+
+    if (privateQuiz.isLocked) {
+      throw new Error('Quiz is locked. Complete the prerequisites first.');
+    }
+
+    return privateQuiz;
   }
 
   async findUserQuizResponses(userId: string): Promise<UserQuizResponse[]> {
@@ -119,12 +282,10 @@ export class QuizService {
         // Save the new quiz to the private collection
         const newPrivateQuiz = new this.privateQuizModel(privateQuizData);
         const savedPrivateQuiz = await newPrivateQuiz.save();
+        if (savedPrivateQuiz.id === '6dab54e6-321c-4c5a-b24f-e14f295cb334') {
+          this.logger.debug('savedPrivateQuiz -->', savedPrivateQuiz);
+        }
 
-        this.logger.debug('PrivateQuiz -->', privateQuizData);
-
-        this.logger.debug('newPrivateQuiz -->', newPrivateQuiz);
-
-        this.logger.debug('savedPrivateQuiz -->', savedPrivateQuiz);
         return savedPrivateQuiz;
       }),
     );

@@ -5,6 +5,8 @@ import {
   Deck,
   CreateUserDeckResponseInput,
   UserDeckResponse,
+  Card,
+  PrivateDeck,
 } from './entities/deck.entity';
 import { JwtAuthGuard } from 'src/auth/gql.auth.guard';
 
@@ -39,5 +41,35 @@ export class DeckResolver {
     @Args({ name: 'userId', type: () => String }) userId: string,
   ): Promise<UserDeckResponse[]> {
     return this.deckService.findUserDeckResponses(userId);
+  }
+  // @Mutation(() => Boolean)
+  // async updateCardMetrics(
+  //   @Args('userId') userId: string,
+  //   @Args('deckId') deckId: string,
+  //   @Args('cardId') cardId: string,
+  //   @Args('correct') correct: boolean,
+  // ): Promise<boolean> {
+  //   await this.deckService.updateCardMetricsInDeckResponse(
+  //     userId,
+  //     deckId,
+  //     cardId,
+  //     correct,
+  //   );
+  //   return true;
+  // }
+
+  @Query(() => [Card])
+  async generateReviewQueue(
+    @Args('userId') userId: string,
+    @Args('deckId') deckId: string,
+  ): Promise<Card[]> {
+    return this.deckService.generateReviewQueueFromDeck(userId, deckId);
+  }
+
+  @Query(() => [PrivateDeck])
+  async getAllDecksFromUser(
+    @Args({ name: 'id', type: () => String }) id: string,
+  ): Promise<PrivateDeck[]> {
+    return this.deckService.findAllDecksFromUser(id);
   }
 }

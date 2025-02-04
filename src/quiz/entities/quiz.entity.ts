@@ -32,39 +32,39 @@ export class Quiz {
 export class PrivateQuiz {
   @Field()
   @Prop({ required: true })
-  id!: string;
+  id!: string; // ID único do PrivateQuiz (referência ao Quiz)
 
   @Field()
   @Prop({ required: true })
-  title!: string;
+  title!: string; // Copiado do Quiz
 
   @Field()
   @Prop({ required: true })
-  description!: string;
+  description!: string; // Copiado do Quiz
 
   @Field()
   @Prop({ required: true })
-  deckAssociatedId!: string;
+  deckAssociatedId!: string; // Copiado do Quiz
 
   @Field(() => [Question])
-  @Prop({ required: false })
-  questions!: Question[];
-
-  @Field(() => String)
   @Prop({ required: true })
-  ownerId!: string; // Owner (User ID)
+  questions!: Question[]; // Copiado do Quiz
+
+  @Field()
+  @Prop({ required: true })
+  ownerId!: string; // Identificador do usuário (manipulação privada)
 
   @Field()
   @Prop({ default: true })
-  isLocked!: boolean; // If the quiz is locked or unlocked
+  isLocked!: boolean; // Indica se o quiz está bloqueado
 
   @Field()
   @Prop({ default: 0 })
-  score!: number; // User's score in the quiz
+  score!: number; // Pontuação do usuário neste quiz
 
   @Field(() => Date)
   @Prop({ default: Date.now })
-  lastAccessed!: Date; // Last time the user accessed the quiz
+  lastAccessed!: Date; // Último acesso ao quiz
 }
 
 @ObjectType()
@@ -96,6 +96,9 @@ export class UserQuizResponse {
   @Field(() => [UserQuestionMetrics])
   @Prop({ required: true })
   questionMetrics!: UserQuestionMetrics[]; // Métricas associadas a cada pergunta
+
+  @Field()
+  passed!: boolean; // Indica se o usuário passou no quiz
 }
 
 @ObjectType()

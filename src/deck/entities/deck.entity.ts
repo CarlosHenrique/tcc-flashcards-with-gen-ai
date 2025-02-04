@@ -34,6 +34,10 @@ export class PrivateDeck {
 
   @Field()
   @Prop({ required: true })
+  ownerId!: string; // Identificador do usuário (manipulação privada)
+
+  @Field()
+  @Prop({ required: true })
   title!: string;
 
   @Field()
@@ -120,20 +124,16 @@ export class UserDeckResponse {
 @Schema()
 export class UserCardMetrics {
   @Field(() => String)
-  @Prop({ required: true, ref: 'Card' })
-  cardId!: mongoose.Schema.Types.ObjectId; // Referência ao modelo de Card
+  @Prop({ required: true })
+  cardId!: string; // Referência ao modelo de Card
 
   @Field()
   @Prop({ required: true, default: 0 })
-  repetitions!: number; // Número de vezes que o card foi revisado
+  attempts!: number; // Número de vezes que o card foi revisado
 
   @Field()
-  @Prop({ required: true, default: 2.5 })
-  easiness!: number; // Fator de facilidade no algoritmo de repetição
-
-  @Field()
-  @Prop({ required: true, default: 1 })
-  interval!: number; // Intervalo para a próxima revisão
+  @Prop({ required: true })
+  score!: number; // Intervalo para a próxima revisão
 
   @Field(() => Date)
   @Prop({ required: true })
@@ -141,7 +141,7 @@ export class UserCardMetrics {
 
   @Field(() => Date)
   @Prop({ default: Date.now })
-  lastReviewedDate!: Date; // Data da última revisão
+  lastAttempt!: Date; // Data da última revisão
 }
 
 @InputType()
@@ -207,6 +207,9 @@ export class CreateUserDeckResponseInput {
 
   @Field(() => [CreateUserCardMetricsInput])
   cardMetrics!: CreateUserCardMetricsInput[];
+
+  @Field(() => Date)
+  date!: Date;
 }
 
 @InputType()
@@ -215,19 +218,16 @@ export class CreateUserCardMetricsInput {
   cardId!: string;
 
   @Field()
-  repetitions!: number;
+  attempts!: number;
 
   @Field()
-  easiness!: number;
-
-  @Field()
-  interval!: number;
+  score!: number;
 
   @Field(() => Date)
   nextReviewDate!: Date;
 
   @Field(() => Date)
-  lastReviewedDate!: Date;
+  lastAttempt!: Date;
 }
 
 export type DeckDocument = HydratedDocument<Deck>;

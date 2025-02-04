@@ -28,35 +28,18 @@ export class QuizResolver {
   }
 
   @Query(() => Quiz)
-  async getQuizById(
-    @Args({ name: 'id', type: () => String }) id: string,
-  ): Promise<Quiz> {
-    return this.quizService.findQuizById(id);
-  }
-
-  @Query(() => Quiz)
   async getQuizByDeckAssociatedId(
     @Args({ name: 'id', type: () => String }) id: string,
   ): Promise<Quiz> {
-    const quiz = await this.quizService.findQuizByDeckAssociatedId(id);
-    if (!quiz) {
-      throw new NotFoundException(`Quiz with deckAssociatedId ${id} not found`);
-    }
-
-    quiz.questions.forEach((question) => {
-      if (!question.answer) {
-        question.answer = question.type === 'multiple_choice' ? [] : '';
-      }
-    });
-    console.log('AFTER CHANGE', quiz);
-    return quiz;
+    return this.quizService.findQuizByDeckAssociatedId(id);
   }
 
-  @Mutation(() => Quiz)
-  async createQuiz(
-    @Args({ name: 'input', type: () => CreateQuizInput }) data: CreateQuizInput,
-  ): Promise<Quiz> {
-    return this.quizService.createQuiz(data);
+  @Mutation(() => PrivateQuiz)
+  async unlockQuiz(
+    @Args({ name: 'quizId', type: () => String }) quizId: string,
+    @Args({ name: 'userId', type: () => String }) userId: string,
+  ): Promise<PrivateQuiz> {
+    return this.quizService.unlockQuizForUser(quizId, userId);
   }
 
   @Mutation(() => UserQuizResponse)
@@ -64,21 +47,14 @@ export class QuizResolver {
     @Args({ name: 'input', type: () => CreateUserQuizResponseInput })
     data: CreateUserQuizResponseInput,
   ): Promise<UserQuizResponse> {
-    return this.quizService.createUserQuizResponse(data);
+    return this.quizService.calculateAndSaveQuizResponse(data);
   }
 
-  @Query(() => [UserQuizResponse])
-  async getUserQuizResponses(
-    @Args({ name: 'userId', type: () => String }) userId: string,
-  ): Promise<UserQuizResponse[]> {
-    return this.quizService.findUserQuizResponses(userId);
-  }
-
-  @Query(() => UserQuizResponse, { nullable: true })
-  async getLastUserQuizResponse(
-    @Args({ name: 'userId', type: () => String }) userId: string,
-    @Args({ name: 'quizId', type: () => String }) quizId: string,
-  ): Promise<UserQuizResponse | null> {
-    return this.quizService.findLastUserQuizResponse(userId, quizId);
+  @Query(() => PrivateQuiz, { nullable: true })
+  async getQuizFromUser(
+    @Args('userId', { type: () => String }) userId: string,
+    @Args('deckId', { type: () => String }) deckId: string,
+  ): Promise<PrivateQuiz | null> {
+    return this.quizService.findQuizFromUser(userId, deckId);
   }
 }
