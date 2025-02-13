@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { DeckModule } from './deck/deck.module';
 import { QuizModule } from './quiz/quiz.module';
+import { HealthModule } from './health/health.module';
 import 'dotenv/config';
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import 'dotenv/config';
     AuthModule,
     DeckModule,
     QuizModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
