@@ -15,6 +15,12 @@ export class User {
   @Field()
   @Prop({ required: true })
   preferredName!: string;
+
+  @Prop()
+  resetToken?: string;
+
+  @Prop()
+  resetTokenExpires?: Date;
 }
 
 @InputType()

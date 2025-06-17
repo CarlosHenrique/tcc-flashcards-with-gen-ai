@@ -20,6 +20,8 @@ export class UserService {
 
   public async findOneByEmail(email: string): Promise<User> {
     const found = await this.userModel.findOne({ email });
+    console.log('cheguei aqui com o email: ', email);
+    console.log('found: ', found);
     return found;
   }
 
@@ -27,5 +29,16 @@ export class UserService {
     const createdUser = await this.userModel.create(data);
 
     return createdUser.toObject<User>();
+  }
+
+  public async updateUser(id: string, data: Partial<User>): Promise<User> {
+    const updated = await this.userModel.findOneAndUpdate({ email: id }, data, {
+      new: true,
+    });
+    return updated.toObject<User>();
+  }
+
+  public async findByResetToken(token: string): Promise<User> {
+    return await this.userModel.findOne({ resetToken: token });
   }
 }

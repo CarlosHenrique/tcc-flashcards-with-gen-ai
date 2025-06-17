@@ -8,6 +8,9 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserInput, User } from 'src/user/entities/user.entity';
 import { QuizService } from 'src/quiz/quiz.service';
 import { DeckService } from 'src/deck/deck.service';
+import { randomBytes } from 'crypto';
+import { MailService } from 'src/mail/mail.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -15,6 +18,7 @@ export class AuthService {
     private jwtService: JwtService,
     private quizService: QuizService,
     private deckService: DeckService,
+    private mailService: MailService, // ✅
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -52,5 +56,39 @@ export class AuthService {
     await this.quizService.createQuizCopyForUser(user.email);
     await this.deckService.createDecksCopyForUser(user.email);
     return createdUser;
+  }
+
+  async forgotPassword(email: string): Promise<string> {
+    const user = await this.userService.findOneByEmail(email);
+    if (!user) throw new Error('Usuário não encontrado.');
+
+    const token = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1h
+
+    await this.userService.updateUser(user.email, {
+      resetToken: token,
+      resetTokenExpires: expires,
+    });
+
+    await this.mailService.sendResetPasswordEmail(email, token);
+
+    return 'E-mail de recuperação enviado com sucesso.';
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<string> {
+    const user = await this.userService.findByResetToken(token);
+    if (!user || user.resetTokenExpires < new Date()) {
+      throw new Error('Token inválido ou expirado.');
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    await this.userService.updateUser(user.email, {
+      password: hashed,
+      resetToken: null,
+      resetTokenExpires: null,
+    });
+
+    return 'Senha redefinida com sucesso!';
   }
 }
