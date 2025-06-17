@@ -17,3 +17,18 @@ export class LoginUserInput {
   @Field()
   password!: string;
 }
+
+@InputType()
+export class ForgotPasswordInput {
+  @Field()
+  email: string;
+}
+
+@InputType()
+export class ResetPasswordInput {
+  @Field()
+  token: string;
+
+  @Field()
+  newPassword: string;
+}
