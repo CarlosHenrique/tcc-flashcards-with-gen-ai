@@ -58,14 +58,6 @@ export class DeckResolver {
   //   return true;
   // }
 
-  @Query(() => [Card])
-  async generateReviewQueue(
-    @Args('userId') userId: string,
-    @Args('deckId') deckId: string,
-  ): Promise<Card[]> {
-    return this.deckService.generateReviewQueueFromDeck(userId, deckId);
-  }
-
   @Query(() => [PrivateDeck])
   async getAllDecksFromUser(
     @Args({ name: 'id', type: () => String }) id: string,

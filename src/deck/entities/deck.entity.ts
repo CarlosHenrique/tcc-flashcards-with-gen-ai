@@ -56,6 +56,10 @@ export class PrivateDeck {
   @Prop({ required: true })
   theme!: string;
 
+  @Field(() => Date, { nullable: true }) // Permite null no schema GraphQL
+  @Prop({ required: false }) // Permite undefined/null no MongoDB
+  nextDeckReviewDate?: Date; // Tipo opcional no TypeScript
+
   @Field(() => [Card])
   @Prop({ required: true })
   cards!: Card[];
@@ -117,7 +121,7 @@ export class UserDeckResponse {
 
   @Field()
   @Prop({ required: true })
-  score!: number; // Pontuação do quiz
+  totalSessionScore!: number; // Pontuação total desta sessão de estudo
 
   @Field(() => Date)
   @Prop({ default: Date.now })
@@ -141,7 +145,11 @@ export class UserCardMetrics {
 
   @Field()
   @Prop({ required: true })
-  score!: number; // Intervalo para a próxima revisão
+  reviewQuality!: number; // Nova: Qualidade da resposta (0-5)
+
+  @Field()
+  @Prop({ required: true, default: 2.5 }) // Adicionado: Fator de facilidade
+  easeFactor!: number;
 
   @Field(() => Date)
   @Prop({ required: true })
@@ -211,7 +219,7 @@ export class CreateUserDeckResponseInput {
   selectedCardsIds!: string[];
 
   @Field()
-  score!: number;
+  totalSessionScore!: number; // Alterado: Para refletir a pontuação da sessão
 
   @Field(() => [CreateUserCardMetricsInput])
   cardMetrics!: CreateUserCardMetricsInput[];
@@ -229,7 +237,10 @@ export class CreateUserCardMetricsInput {
   attempts!: number;
 
   @Field()
-  score!: number;
+  reviewQuality!: number; // Alterado: Para qualidade da revisão
+
+  @Field()
+  easeFactor!: number; // Adicionado: Para o fator de facilidade
 
   @Field(() => Date)
   nextReviewDate!: Date;
