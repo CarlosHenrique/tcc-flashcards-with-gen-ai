@@ -73,27 +73,26 @@ export class DeckService {
     }
 
     // Desbloqueio de próxima fase
-    if (totalSessionScore >= 70) {
-      const currentPhaseNumber = this.getPhaseOrder(privateDeck.title);
-      this.logger.log(`Current phase: ${currentPhaseNumber}`);
-      if (currentPhaseNumber !== null) {
-        const nextDeck = await this.privateDeckModel.findOne({
-          ownerId: userId,
-          title: {
-            $regex: new RegExp(`^Fase ${currentPhaseNumber + 1}:`, 'i'),
-          },
-        });
 
-        if (nextDeck && nextDeck.isLocked) {
-          await this.privateDeckModel.findOneAndUpdate(
-            { id: nextDeck.id, ownerId: userId },
-            { $set: { isLocked: false } },
-            { new: true },
-          );
-          this.logger.log(
-            `Deck "${nextDeck.title}" desbloqueado para o usuário ${userId}`,
-          );
-        }
+    const currentPhaseNumber = this.getPhaseOrder(privateDeck.title);
+    this.logger.log(`Current phase: ${currentPhaseNumber}`);
+    if (currentPhaseNumber !== null) {
+      const nextDeck = await this.privateDeckModel.findOne({
+        ownerId: userId,
+        title: {
+          $regex: new RegExp(`^Fase ${currentPhaseNumber + 1}:`, 'i'),
+        },
+      });
+
+      if (nextDeck && nextDeck.isLocked) {
+        await this.privateDeckModel.findOneAndUpdate(
+          { id: nextDeck.id, ownerId: userId },
+          { $set: { isLocked: false } },
+          { new: true },
+        );
+        this.logger.log(
+          `Deck "${nextDeck.title}" desbloqueado para o usuário ${userId}`,
+        );
       }
     }
 
