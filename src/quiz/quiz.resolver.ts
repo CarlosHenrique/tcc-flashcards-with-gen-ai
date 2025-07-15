@@ -34,14 +34,6 @@ export class QuizResolver {
     return this.quizService.findQuizByDeckAssociatedId(id);
   }
 
-  @Mutation(() => PrivateQuiz)
-  async unlockQuiz(
-    @Args({ name: 'quizId', type: () => String }) quizId: string,
-    @Args({ name: 'userId', type: () => String }) userId: string,
-  ): Promise<PrivateQuiz> {
-    return this.quizService.unlockQuizForUser(quizId, userId);
-  }
-
   @Mutation(() => UserQuizResponse)
   async createUserQuizResponse(
     @Args({ name: 'input', type: () => CreateUserQuizResponseInput })
