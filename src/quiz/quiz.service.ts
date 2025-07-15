@@ -127,6 +127,8 @@ export class QuizService {
       lastAccessed: new Date(), // Sempre atualiza `lastAccessed`
     };
 
+    // Aqui mantemos a lógica de 'melhor pontuação' para o histórico do jogador,
+    // mas o desbloqueio não dependerá mais disso.
     if (newScore > privateQuiz.score) {
       updateFields.score = newScore; // Atualiza `score` apenas se for maior
     }
@@ -138,65 +140,19 @@ export class QuizService {
       { new: true },
     );
 
-    // 🔹 4. Se o score for >= 70, tentar desbloquear o próximo quiz
-    if (newScore >= 70) {
-      console.log(
-        `🔓 [calculateAndSaveQuizResponse] Tentando desbloquear próximo quiz...`,
-      );
+    // 🔹 REMOÇÃO DA TRAVA: Desbloquear o próximo quiz independentemente da pontuação.
+    // A próxima fase será desbloqueada assim que o quiz atual for completado e a pontuação registrada.
+    console.log(
+      `🔓 [calculateAndSaveQuizResponse] Tentando desbloquear próximo quiz (independente da pontuação)...`,
+    );
 
-      const currentPhaseNumber = this.getPhaseOrder(privateQuiz.title);
-      console.log(
-        `🔍 [calculateAndSaveQuizResponse] Fase atual identificada: ${currentPhaseNumber}`,
-      );
-
-      if (currentPhaseNumber !== null) {
-        // Buscar o próximo quiz baseado no título
-        const nextQuiz = await this.privateQuizModel.findOne({
-          ownerId: userId,
-          title: {
-            $regex: new RegExp(`^Fase ${currentPhaseNumber + 1}:`, 'i'),
-          },
-        });
-
-        console.log(
-          `🔍 [calculateAndSaveQuizResponse] Próximo quiz encontrado: ${
-            nextQuiz ? nextQuiz.title : 'Nenhum encontrado'
-          }`,
-        );
-
-        if (nextQuiz) {
-          if (nextQuiz.isLocked) {
-            console.log(
-              `🔓 [calculateAndSaveQuizResponse] Desbloqueando quiz ${nextQuiz.title}`,
-            );
-            await this.privateQuizModel.findOneAndUpdate(
-              { id: nextQuiz.id, ownerId: userId },
-              { $set: { isLocked: false } },
-              { new: true },
-            );
-            console.log(
-              `✅ [calculateAndSaveQuizResponse] Quiz "${nextQuiz.title}" desbloqueado para o usuário ${userId}`,
-            );
-          } else {
-            console.log(
-              `⚠️ [calculateAndSaveQuizResponse] Quiz "${nextQuiz.title}" já estava desbloqueado.`,
-            );
-          }
-        } else {
-          console.error(
-            `❌ [calculateAndSaveQuizResponse] Nenhum próximo quiz encontrado para "Fase ${
-              currentPhaseNumber + 1
-            }:"`,
-          );
-        }
-      } else {
-        console.error(
-          `❌ [calculateAndSaveQuizResponse] Não foi possível determinar o número da fase do quiz atual.`,
-        );
-      }
-    }
+    const currentPhaseNumber = this.getPhaseOrder(privateQuiz.title);
+    console.log(
+      `🔍 [calculateAndAndSaveQuizResponse] Fase atual identificada: ${currentPhaseNumber}`,
+    );
 
     // 🔹 5. Criar a resposta do usuário para o quiz
+    // Isso permanece inalterado, pois é o registro da tentativa para análise.
     const userQuizResponse = await this.userQuizResponseModel.create({
       userId,
       quizId,
@@ -222,34 +178,6 @@ export class QuizService {
     const match = title.match(/Fase (\d+)/);
     return match ? parseInt(match[1], 10) : null;
   }
-
-  async unlockQuizForUser(
-    quizId: string,
-    userId: string,
-  ): Promise<PrivateQuiz> {
-    const quiz = await this.findQuizById(quizId);
-    const privateQuiz = await this.privateQuizModel.findOne({
-      id: quizId,
-      ownerId: userId,
-    });
-
-    if (!privateQuiz) {
-      const newPrivateQuiz = new this.privateQuizModel({
-        ...quiz,
-        ownerId: userId,
-        isLocked: false,
-      });
-
-      return newPrivateQuiz.save();
-    }
-
-    if (privateQuiz.isLocked) {
-      throw new Error('Quiz is locked. Complete the prerequisites first.');
-    }
-
-    return privateQuiz;
-  }
-
   async findUserQuizResponses(userId: string): Promise<UserQuizResponse[]> {
     const found = await this.userQuizResponseModel.find({ userId }).exec();
     this.logger.log(
@@ -274,7 +202,7 @@ export class QuizService {
           deckAssociatedId: quizData.deckAssociatedId, // Copy Deck ID
           questions: [...quizData.questions], // Deep copy questions array
           ownerId: userId, // Set userId as owner
-          isLocked: quizData.id !== '6dab54e6-321c-4c5a-b24f-e14f295cb334', // Conditional lock
+
           score: 0, // Default score
           lastAccessed: new Date(), // Set current date as last accessed
         };

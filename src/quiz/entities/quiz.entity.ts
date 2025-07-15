@@ -55,10 +55,6 @@ export class PrivateQuiz {
   ownerId!: string; // Identificador do usuário (manipulação privada)
 
   @Field()
-  @Prop({ default: true })
-  isLocked!: boolean; // Indica se o quiz está bloqueado
-
-  @Field()
   @Prop({ default: 0 })
   score!: number; // Pontuação do usuário neste quiz
 
