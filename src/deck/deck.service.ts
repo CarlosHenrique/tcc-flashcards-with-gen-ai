@@ -116,7 +116,7 @@ export class DeckService {
         );
       }
 
-      let currentAttempts = (previousCardMetric?.attempts || 0) + 1;
+      const currentAttempts = (previousCardMetric?.attempts || 0) + 1;
       let currentEaseFactor = previousCardMetric?.easeFactor || 2.5;
       const quality = metric.reviewQuality;
 
@@ -132,7 +132,7 @@ export class DeckService {
       let intervalHours: number;
 
       if (quality < 3) {
-        currentAttempts = 1;
+        // currentAttempts = 1; // LINHA COMENTADA PARA NÃO RESETAR SEMPRE PARA 1
         intervalHours = 4;
       } else {
         if (currentAttempts === 1) {
@@ -151,7 +151,7 @@ export class DeckService {
 
       updatedCardMetrics.push({
         cardId: metric.cardId,
-        attempts: currentAttempts,
+        attempts: currentAttempts, // Agora 'attempts' deve refletir o valor correto.
         reviewQuality: quality,
         easeFactor: currentEaseFactor,
         nextReviewDate,
